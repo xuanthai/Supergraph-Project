@@ -1,0 +1,113 @@
+
+schema
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.2", for: EXECUTION)
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @join__field(graph: join__Graph!, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
+
+scalar DateTime
+  @join__type(graph: SAVINGS_SERVICE)
+  @join__type(graph: USER_SERVICE)
+
+scalar join__FieldSet
+
+enum join__Graph {
+  SAVINGS_SERVICE @join__graph(name: "savings_service", url: "http://localhost:4002")
+  USER_SERVICE @join__graph(name: "user_service", url: "http://localhost:4001")
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+input LoginInput
+  @join__type(graph: USER_SERVICE)
+{
+  username: String!
+  password: String!
+}
+
+type LoginPayload
+  @join__type(graph: USER_SERVICE)
+{
+  token: String!
+  user: User!
+}
+
+type Mutation
+  @join__type(graph: SAVINGS_SERVICE)
+  @join__type(graph: USER_SERVICE)
+{
+  deposit(amount: Float!): Saving @join__field(graph: SAVINGS_SERVICE)
+  withdraw(amount: Float!): Saving @join__field(graph: SAVINGS_SERVICE)
+  register(input: RegisterInput!): RegisterPayload @join__field(graph: USER_SERVICE)
+  login(input: LoginInput): LoginPayload @join__field(graph: USER_SERVICE)
+  logout: String @join__field(graph: USER_SERVICE)
+}
+
+type Query
+  @join__type(graph: SAVINGS_SERVICE)
+  @join__type(graph: USER_SERVICE)
+{
+  saving: Saving @join__field(graph: SAVINGS_SERVICE)
+  me: User @join__field(graph: USER_SERVICE)
+}
+
+input RegisterInput
+  @join__type(graph: USER_SERVICE)
+{
+  fullname: String!
+  username: String!
+  password: String!
+}
+
+type RegisterPayload
+  @join__type(graph: USER_SERVICE)
+{
+  status: Int!
+  message: String!
+}
+
+type Saving
+  @join__type(graph: SAVINGS_SERVICE, key: "id")
+{
+  id: ID!
+  banance: Float!
+  user: User
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type User
+  @join__type(graph: SAVINGS_SERVICE, key: "id")
+  @join__type(graph: USER_SERVICE, key: "id")
+{
+  id: ID!
+  saving: Saving @join__field(graph: SAVINGS_SERVICE)
+  fullname: String! @join__field(graph: USER_SERVICE)
+  username: String! @join__field(graph: USER_SERVICE)
+  createdAt: DateTime! @join__field(graph: USER_SERVICE)
+  updatedAt: DateTime! @join__field(graph: USER_SERVICE)
+}
