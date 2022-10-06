@@ -120,4 +120,6 @@ Nginx:
 Database:
 - Postgres/Mongo/Redis setup cluster
 
+### byKey
 
+{{< member-info kind="parameter" type="keyof T" >}}
